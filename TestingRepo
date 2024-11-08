@@ -1,1 +1,186 @@
 
+
+local function webhookmessage(data1, link)
+    local HttpService = game:GetService("HttpService")
+
+    local response = http_request({
+        Url = link,
+
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json"
+        },
+
+        Body = HttpService:JSONEncode(data1)
+    })
+
+    print(response.Success)
+end
+
+local function tpwebhook()
+
+    currentworld = ""
+    if game.placeId == 5151400895 then
+        currentworld = "Bills"
+    else
+        currentworld = "Earth"
+    end
+    local data1 = {
+        ["content"] = "",
+        ["embeds"] = {{
+            ["title"] = "Dbu Farm - " .. game.Players.LocalPlayer.Name,
+
+            ["description"] = "\nPlayer ran script in planet **" .. currentworld .. "**",
+            ["color"] = 6248703,
+            ["footer"] = {
+                ["text"] = "Script v1.0",
+                ["icon_url"] = "https://cdn.discordapp.com/attachments/1294895323852050475/1295927395018215486/newid.png?ex=67106df0&is=670f1c70&hm=4c9506318db653412ee1b96990b09051f78598b92403c3ae7e5f443efa2cdc10&"
+                },
+            ["thumbnail"] = {
+                ["url"] = "https://tr.rbxcdn.com/180DAY-fa4640ea47b1096f1be0d0ecb3e58ba9/768/432/Image/Webp/noFilter"
+            }
+        }},
+        ["username"] = "idealess services",
+        ["avatar_url"] = "https://cdn.discordapp.com/attachments/1294895323852050475/1295927395018215486/newid.png?ex=67106df0&is=670f1c70&hm=4c9506318db653412ee1b96990b09051f78598b92403c3ae7e5f443efa2cdc10&",
+        ["attachments"] = {}
+    }
+
+    local HttpService = game:GetService("HttpService")
+
+    local response = http_request({
+        Url = "https://ptb.discord.com/api/webhooks/1297802576372301865/dqibagn7c25lWORXFNQFmT8bxhztppL2jTntwBbWtSVy2miC7JNlTQF78h6464YkQ9ga",
+
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json"
+        },
+
+        Body = HttpService:JSONEncode(data1)
+    })
+
+    print(response.Success)
+end
+pcall(function() tpwebhook() end)
+
+
+
+-- Services
+local player = game.Players.LocalPlayer
+local tweenService = game:GetService("TweenService")
+local starterGui = game:GetService("StarterGui")
+local userInputService = game:GetService("UserInputService")
+
+-- Create the ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FarmGui"
+screenGui.ResetOnSpawn = false  -- Make GUI persist after death
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Create the Main Frame
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 140.4, 0, 49.27)  -- Absolute size
+frame.Position = UDim2.new(0, 885.6, 0, 115)  -- Adjusted Y position
+frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)  -- Dark gray color
+frame.BackgroundTransparency = 0
+frame.BorderSizePixel = 0  -- Remove border for a cleaner look
+frame.ZIndex = 10  -- Set a high ZIndex to stay on top
+frame.Parent = screenGui
+
+-- Create the TextButton
+local textButton = Instance.new("TextButton")
+textButton.Size = UDim2.new(1, 0, 1, 0)
+textButton.BackgroundTransparency = 1
+textButton.Text = "FARM"  -- Set text to "FARM"
+textButton.Font = Enum.Font.SourceSansBold  -- Use a bold font similar to the image
+textButton.TextColor3 = Color3.fromRGB(255, 255, 255)  -- White text
+textButton.TextSize = 24  -- Increase text size for prominence
+textButton.TextStrokeTransparency = 1  -- No text stroke
+textButton.TextTransparency = 0
+textButton.AutoButtonColor = false  -- Disables button color change on click
+textButton.ZIndex = 11  -- Higher than frame's ZIndex to ensure text displays on top
+textButton.Parent = frame
+
+-- Reference to the center frame (for toggling)
+local centerFrame
+
+-- Function to create, tween in, and toggle the center GUI
+local function toggleCenteredGui()
+    if centerFrame then
+        -- Tween out and destroy the existing center frame
+        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)  -- 1 second duration
+        local tween = tweenService:Create(centerFrame, tweenInfo, {Size = UDim2.new(0, 0, 0, 0)})
+        
+        tween:Play()
+        tween.Completed:Connect(function()
+            centerFrame:Destroy()
+            centerFrame = nil
+        end)
+    else
+        -- Create and tween in a new center frame
+        centerFrame = Instance.new("Frame")
+        centerFrame.Size = UDim2.new(0, 0, 0, 0)  -- Start small in the center
+        centerFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        centerFrame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Center anchor point
+        centerFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Black color
+        centerFrame.BackgroundTransparency = 0
+        centerFrame.BorderSizePixel = 0
+        centerFrame.ZIndex = 20
+        centerFrame.Parent = screenGui
+
+        -- Add UICorner with CornerRadius of 12
+        local uiCorner = Instance.new("UICorner")
+        uiCorner.CornerRadius = UDim.new(0, 12)
+        uiCorner.Parent = centerFrame
+
+        -- Define the tween properties to expand the frame
+        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)  -- 1 second duration
+        local targetSize = UDim2.new(0.5, 0, 0.5, 0)  -- Target size (50% of the screen)
+
+        -- Create and play the tween to expand
+        local tween = tweenService:Create(centerFrame, tweenInfo, {Size = targetSize})
+        tween:Play()
+
+        -- Make the center frame draggable (for both desktop and mobile)
+        local dragging = false
+        local dragInput, mousePos, framePos
+
+        local function update(input)
+            local delta = input.Position - mousePos
+            centerFrame.Position = UDim2.new(
+                framePos.X.Scale,
+                framePos.X.Offset + delta.X,
+                framePos.Y.Scale,
+                framePos.Y.Offset + delta.Y
+            )
+        end
+
+        centerFrame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                mousePos = input.Position
+                framePos = centerFrame.Position
+
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
+
+        centerFrame.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
+            end
+        end)
+
+        userInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                update(input)
+            end
+        end)
+    end
+end
+
+-- Connect button press to toggleCenteredGui function
+textButton.MouseButton1Click:Connect(toggleCenteredGui)
