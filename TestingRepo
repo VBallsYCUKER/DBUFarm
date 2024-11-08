@@ -28,7 +28,7 @@ local function tpwebhook()
     local data1 = {
         ["content"] = "",
         ["embeds"] = {{
-            ["title"] = "Dbu Farm - " .. game.Players.LocalPlayer.Name,
+            ["title"] = "Dbu Farm - " .. game.Players.LocalPlayer.DisplayName,
 
             ["description"] = "\nPlayer ran script in planet **" .. currentworld .. "**",
             ["color"] = 6248703,
