@@ -123,4 +123,3 @@ while true do
     wait(1) -- Update every second
 end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/VBallsYCUKER/theautoframe/refs/heads/main/autorbs", true))()
