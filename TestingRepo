@@ -76,124 +76,50 @@ end
 -- Execute webhook function with error handling
 pcall(function() tpwebhook() end)
 
-
--- Services
-local player = game.Players.LocalPlayer
-local tweenService = game:GetService("TweenService")
-local starterGui = game:GetService("StarterGui")
-local userInputService = game:GetService("UserInputService")
-
--- Create the ScreenGui
+-- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "FarmGui"
-screenGui.ResetOnSpawn = false  -- Make GUI persist after death
-screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false -- Prevents GUI from resetting on respawn
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Create the Main Frame
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 140.4, 0, 49.27)  -- Absolute size
-frame.Position = UDim2.new(0, 885.6, 0, 115)  -- Adjusted Y position
-frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)  -- Dark gray color
-frame.BackgroundTransparency = 0
-frame.BorderSizePixel = 0  -- Remove border for a cleaner look
-frame.ZIndex = 10  -- Set a high ZIndex to stay on top
-frame.Parent = screenGui
+-- Create TextLabel for rebirths
+local rebirthLabel = Instance.new("TextLabel")
+rebirthLabel.Size = UDim2.new(1, 0, 0.1, 0) -- Fill width, adjust height
+rebirthLabel.Position = UDim2.new(0, 0, 0.15, 0) -- Position between top and middle
+rebirthLabel.TextScaled = true
+rebirthLabel.BackgroundTransparency = 1
+rebirthLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+rebirthLabel.Text = "CURRENT REBIRTHS: 0"
+rebirthLabel.Parent = screenGui
 
--- Create the TextButton
-local textButton = Instance.new("TextButton")
-textButton.Size = UDim2.new(1, 0, 1, 0)
-textButton.BackgroundTransparency = 1
-textButton.Text = "FARM"  -- Set text to "FARM"
-textButton.Font = Enum.Font.SourceSansBold  -- Use a bold font similar to the image
-textButton.TextColor3 = Color3.fromRGB(255, 255, 255)  -- White text
-textButton.TextSize = 24  -- Increase text size for prominence
-textButton.TextStrokeTransparency = 1  -- No text stroke
-textButton.TextTransparency = 0
-textButton.AutoButtonColor = false  -- Disables button color change on click
-textButton.ZIndex = 11  -- Higher than frame's ZIndex to ensure text displays on top
-textButton.Parent = frame
+-- Function to format the rebirth count
+local function format_number(number)
+    local suffixes = {"", "K", "M", "B", "T", "QD"}
+    local suffix_index = 1
 
--- Reference to the center frame (for toggling)
-local centerFrame
+    while math.abs(number) >= 1000 and suffix_index < #suffixes do
+        number = number / 1000.0
+        suffix_index = suffix_index + 1
+    end
 
--- Function to create, tween in, and toggle the center GUI
-local function toggleCenteredGui()
-    if centerFrame then
-        -- Tween out and destroy the existing center frame
-        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)  -- 1 second duration
-        local tween = tweenService:Create(centerFrame, tweenInfo, {Size = UDim2.new(0, 0, 0, 0)})
-        
-        tween:Play()
-        tween.Completed:Connect(function()
-            centerFrame:Destroy()
-            centerFrame = nil
-        end)
-    else
-        -- Create and tween in a new center frame
-        centerFrame = Instance.new("Frame")
-        centerFrame.Size = UDim2.new(0, 0, 0, 0)  -- Start small in the center
-        centerFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-        centerFrame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Center anchor point
-        centerFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Black color
-        centerFrame.BackgroundTransparency = 0
-        centerFrame.BorderSizePixel = 0
-        centerFrame.ZIndex = 20
-        centerFrame.Parent = screenGui
+    return string.format("%.2f%s", number, suffixes[suffix_index])
+end
 
-        -- Add UICorner with CornerRadius of 12
-        local uiCorner = Instance.new("UICorner")
-        uiCorner.CornerRadius = UDim.new(0, 12)
-        uiCorner.Parent = centerFrame
-
-        -- Define the tween properties to expand the frame
-        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)  -- 1 second duration
-        local targetSize = UDim2.new(0.5, 0, 0.5, 0)  -- Target size (50% of the screen)
-
-        -- Create and play the tween to expand
-        local tween = tweenService:Create(centerFrame, tweenInfo, {Size = targetSize})
-        tween:Play()
-
-        -- Make the center frame draggable (for both desktop and mobile)
-        local dragging = false
-        local dragInput, mousePos, framePos
-
-        local function update(input)
-            local delta = input.Position - mousePos
-            centerFrame.Position = UDim2.new(
-                framePos.X.Scale,
-                framePos.X.Offset + delta.X,
-                framePos.Y.Scale,
-                framePos.Y.Offset + delta.Y
-            )
+-- Function to update rebirth count
+local function updateRebirths()
+    local player = game.Players.LocalPlayer
+    local playerStats = game:GetService("ReplicatedStorage"):FindFirstChild("Datas"):FindFirstChild(tostring(player.UserId))
+    
+    if playerStats then
+        local playerRebirths = playerStats:FindFirstChild("Rebirth")
+        if playerRebirths then
+            rebirthLabel.Text = "CURRENT REBIRTHS: " .. format_number(playerRebirths.Value)
         end
-
-        centerFrame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                mousePos = input.Position
-                framePos = centerFrame.Position
-
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
-            end
-        end)
-
-        centerFrame.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                dragInput = input
-            end
-        end)
-
-        userInputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                update(input)
-            end
-        end)
     end
 end
 
--- Connect button press to toggleCenteredGui function
-textButton.MouseButton1Click:Connect(toggleCenteredGui)
+-- Update rebirth count every second
+while true do
+    updateRebirths()
+    wait(1) -- Update every second
+end
+
