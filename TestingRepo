@@ -1,67 +1,80 @@
 
+-- Function to format numbers
+function format_number(number)
+    local suffixes = {"", "K", "M", "B", "T", "QD"}
+    local suffix_index = 1
 
+    while math.abs(number) >= 1000 and suffix_index < #suffixes do
+        number = number / 1000.0
+        suffix_index = suffix_index + 1
+    end
+
+    return string.format("%.2f%s", number, suffixes[suffix_index])
+end
+
+-- Function to send a message to the webhook
 local function webhookmessage(data1, link)
     local HttpService = game:GetService("HttpService")
 
     local response = http_request({
         Url = link,
-
         Method = "POST",
         Headers = {
             ["Content-Type"] = "application/json"
         },
-
         Body = HttpService:JSONEncode(data1)
     })
 
     print(response.Success)
 end
 
+-- Function to gather data and send the webhook message
 local function tpwebhook()
-
-    currentworld = ""
-    if game.placeId == 5151400895 then
+    local currentworld = ""
+    if game.PlaceId == 5151400895 then
         currentworld = "Bills"
     else
         currentworld = "Earth"
     end
+
+    -- Fetch player stats
+    local playerStats = game:GetService("ReplicatedStorage"):FindFirstChild("Datas"):FindFirstChild(tostring(game.Players.LocalPlayer.UserId))
+    local rebirthCount = 0
+    if playerStats then
+        local playerRebirths = playerStats:FindFirstChild("Rebirth")
+        if playerRebirths then
+            rebirthCount = playerRebirths.Value
+        end
+    end
+
+    local formattedRebirths = format_number(rebirthCount)
+    
+    -- Webhook data
     local data1 = {
         ["content"] = "",
         ["embeds"] = {{
-            ["title"] = "Dbu Farm - " .. game.Players.LocalPlayer.Name,
-
-            ["description"] = "\nPlayer ran script in planet **" .. currentworld .. "**",
-            ["color"] = 6248703,
+            ["title"] = "Script Logger -  " .. game.Players.LocalPlayer.Name,
+            ["description"] = "\nPlayer ran script in planet **" .. currentworld .. "**" ..
+                              "\nRebirths: **" .. formattedRebirths .. "**",
+            ["color"] = 0000000,
             ["footer"] = {
-                ["text"] = "Script v1.0",
-                ["icon_url"] = "https://blog.lightbulbs-direct.com/wp-content/uploads/iStock-537286370-scaled-e1678726251180.jpg"
-                },
+                ["text"] = "IDEALESS SERVICES",
+                ["icon_url"] = "https://media.discordapp.net/attachments/1297801848916283424/1304676240187330591/IMG_0430.jpg?ex=673041ef&is=672ef06f&hm=4ae1eec3940f520c4680ea2df1546d819bc592af5bd48780c5b0c9ce3306e281&=&format=webp&width=596&height=596"
+            },
             ["thumbnail"] = {
-                ["url"] = "https://tr.rbxcdn.com/180DAY-fa4640ea47b1096f1be0d0ecb3e58ba9/768/432/Image/Webp/noFilter"
+                ["url"] = "https://media.discordapp.net/attachments/1297801848916283424/1304676240451567636/IMG_0431.jpg?ex=673041ef&is=672ef06f&hm=6ba3d2abbad1100001c5e0a1dbf1712214a6fa470a3db017edf824af2147b85f&=&format=webp&width=596&height=596"
             }
         }},
-        ["username"] = "idealess services",
-        ["avatar_url"] = "https://blog.lightbulbs-direct.com/wp-content/uploads/iStock-537286370-scaled-e1678726251180.jpg",
+        ["username"] = "user logger",
+        ["avatar_url"] = "https://media.discordapp.net/attachments/1297801848916283424/1304676240187330591/IMG_0430.jpg?ex=673041ef&is=672ef06f&hm=4ae1eec3940f520c4680ea2df1546d819bc592af5bd48780c5b0c9ce3306e281&=&format=webp&width=596&height=596",
         ["attachments"] = {}
     }
 
-    local HttpService = game:GetService("HttpService")
-
-    local response = http_request({
-        Url = "https://ptb.discord.com/api/webhooks/1297802576372301865/dqibagn7c25lWORXFNQFmT8bxhztppL2jTntwBbWtSVy2miC7JNlTQF78h6464YkQ9ga",
-
-        Method = "POST",
-        Headers = {
-            ["Content-Type"] = "application/json"
-        },
-
-        Body = HttpService:JSONEncode(data1)
-    })
-
-    print(response.Success)
+    webhookmessage(data1, "https://ptb.discord.com/api/webhooks/1297802576372301865/dqibagn7c25lWORXFNQFmT8bxhztppL2jTntwBbWtSVy2miC7JNlTQF78h6464YkQ9ga")
 end
-pcall(function() tpwebhook() end)
 
+-- Execute webhook function with error handling
+pcall(function() tpwebhook() end)
 
 
 -- Services
